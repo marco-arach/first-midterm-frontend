@@ -19,7 +19,29 @@ export async function registerUser(
     const data = await response.json();
     return data;
   } catch (err) {
-    console.error("Error en generateObjects:", err);
+    console.error("Error al intentar registrar usuario:", err);
+    return { success: false, error: "Error al conectar con el backend." };
+  }
+}
+
+export async function loginUser(
+  email: string,
+  password: string
+): Promise<RegistrationResponse> {
+
+  try {
+    const response = await fetch(`${BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+    return data;
+  } catch (err) {
+    console.error("Error al iniciar sesión:", err);
     return { success: false, error: "Error al conectar con el backend." };
   }
 }
