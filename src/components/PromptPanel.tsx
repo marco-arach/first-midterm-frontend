@@ -1,14 +1,29 @@
 import React, { useState } from "react";
+import { CanvasManager } from "../managers/CanvasManager";
+import { generateObjects } from "../services/ApiService";
 
 interface PromptPanelProps {
-    pizarraId: string;
+    canvasManager: CanvasManager;
 }
 
-const PromptPanel: React.FC<PromptPanelProps> = ({ }) => {
+const PromptPanel: React.FC<PromptPanelProps> = ({ canvasManager }) => {
     const [prompt, setPrompt] = useState<string>("");
 
     const handleSendPrompt = async () => {
         if (!prompt) return;
+        try {
+            const objetos = canvasManager.getObjetos();
+            const result = await generateObjects(prompt, objetos);
+
+            if (result.success && result.objetos) {
+                const added = canvasManager.agregarObjetos(result.objetos);
+                console.log("Objetos: ", added);
+            } else {
+                console.log("Error al generar diagrama: ", result.error);
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     return (

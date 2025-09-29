@@ -89,7 +89,7 @@ const Whiteboard: React.FC = () => {
                 }}
             >
                 <AIPanel
-                    pizarraId={projectId || ""}
+                    canvasManager={canvasManager}
                 />
                 <ClassModal
                     selectedClass={selectedClass}
