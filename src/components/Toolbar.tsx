@@ -1,5 +1,6 @@
 import React from 'react';
 import { CanvasManager } from "../managers/CanvasManager";
+import { generateAndDownloadProject } from "../services/ApiService";
 
 interface ToolbarProps {
     activeTool: string;
@@ -11,7 +12,8 @@ interface ToolbarProps {
 const Toolbar: React.FC<ToolbarProps> = ({
     activeTool,
     setActiveTool,
-    onOpenRelationshipModal
+    onOpenRelationshipModal,
+    canvasManager
 }) => {
     const tools = [
         { id: 'select', label: 'Seleccionar', src: '/icons/seleccionar_icon.png' },
@@ -55,6 +57,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 title="Relaciones"
             >
                 <img src="/icons/asociacion_icon.png" alt="Relaciones" className="w-8 h-8" />
+            </div>
+            <div
+                className="p-1 rounded cursor-pointer bg-green-600 hover:bg-green-500"
+                style={{ flex: '0 0 auto' }}
+                onClick={() => generateAndDownloadProject(canvasManager.getObjetos())}
+                title="Generar SpringBoot"
+            >
+                <img src="/icons/spring_boot_icon.png" alt="SpringBoot" className="w-8 h-8" />
             </div>
         </div>
     );
