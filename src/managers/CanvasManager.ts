@@ -1,5 +1,6 @@
 import { UMLClass } from "../models/UMLClass";
 import { UMLRelationship } from "../models/UMLRelationship";
+import { SocketClient } from "../services/SocketClient";
 
 type UpdateCallback = () => void;
 
@@ -11,8 +12,11 @@ export class CanvasManager {
     private offset = { x: 0, y: 0 };
     private tempLine: { from: { x: number; y: number }, to: { x: number; y: number } } | null = null;
     private relationshipStart: UMLClass | null = null;
+    private socketClient: SocketClient;
 
-    constructor() {
+    constructor(socketClient: SocketClient) {
+        this.socketClient = socketClient;
+        this.socketClient.on("update", (data: any) => this.handleSocketUpdate(data));
     }
 
     getObjetos() {
@@ -33,6 +37,7 @@ export class CanvasManager {
 
     actualizarClase(updatedClass: UMLClass) {
         this.objetos = this.objetos.map(o => (o.id === updatedClass.id ? updatedClass : o));
+        this.socketClient.emit("actualizar", this.serialize(updatedClass));
         this.notify();
     }
 
@@ -53,6 +58,7 @@ export class CanvasManager {
         } else if (activeTool === "class") {
             const newClass = new UMLClass("_" + Math.random().toString(36).substr(2, 9), pos.x - 75, pos.y - 50, "NewClass", ["attribute1"]);
             this.objetos.push(newClass);
+            this.socketClient.emit("agregar", this.serialize(newClass));
             setSelectedClass(newClass);
             this.notify();
         } else if (["one_to_one", "one_to_many", "many_to_one", "many_to_many", "inheritance", "composition", "aggregation"].includes(activeTool) && clicked) {
@@ -67,6 +73,7 @@ export class CanvasManager {
                         !(o.type === "UMLRelationship" &&
                             ((o as UMLRelationship).from === clicked.id || (o as UMLRelationship).to === clicked.id))
                 );
+                this.socketClient.emit("eliminar", { id: clicked.id, type: "UMLClass" });
                 this.notify();
             } else {
                 const rel = this.objetos.find(
@@ -75,6 +82,7 @@ export class CanvasManager {
 
                 if (rel) {
                     this.objetos = this.objetos.filter(o => o.id !== rel.id);
+                    this.socketClient.emit("eliminar", rel);
                     this.notify();
                 }
             }
@@ -87,6 +95,7 @@ export class CanvasManager {
         if (activeTool === "select" && this.isDragging && this.dragClass) {
             this.dragClass.x = pos.x - this.offset.x;
             this.dragClass.y = pos.y - this.offset.y;
+            this.socketClient.emit("mover", this.serialize(this.dragClass));
             this.notify();
         }
 
@@ -108,6 +117,7 @@ export class CanvasManager {
             if (endClass && endClass.id !== this.relationshipStart.id) {
                 const newRel = new UMLRelationship("_" + Math.random().toString(36).substr(2, 9), this.relationshipStart.id, endClass.id, activeTool);
                 this.objetos.push(newRel);
+                this.socketClient.emit("agregar", this.serialize(newRel));
             }
             this.relationshipStart = null;
             this.tempLine = null;
@@ -177,11 +187,67 @@ export class CanvasManager {
             if (!exists) {
                 const deserialized = this.deserialize(obj);
                 this.objetos.push(deserialized);
+                this.socketClient.emit("agregar", this.serialize(deserialized));
                 addedCount++;
             }
         });
         this.notify();
         return addedCount;
+    }
+
+    private handleSocketUpdate(data: any) {
+        const { accion, objeto, objetos: objetosRecibidos } = data;
+
+        if (objetosRecibidos && (!accion || accion === "sincronizar")) {
+            this.objetos = objetosRecibidos.map((o: any) => this.deserialize(o));
+            this.notify();
+            return;
+        }
+
+        switch (accion) {
+            case "agregar":
+                if (!this.objetos.find(o => o.id === objeto.id)) {
+                    this.objetos.push(this.deserialize(objeto));
+                }
+                break;
+            case "eliminar":
+                this.objetos = this.objetos.filter(o => o.id !== objeto.id);
+                break;
+            case "actualizar":
+            case "mover":
+                this.objetos = this.objetos.map(o =>
+                    o.id === objeto.id ? this.deserialize(objeto) : o
+                );
+                break;
+            default:
+                console.log("Acción desconocida:", accion);
+        }
+
+        this.notify();
+    }
+
+    private serialize(obj: UMLClass | UMLRelationship) {
+        if (obj.type === "UMLClass") {
+            return {
+                id: obj.id,
+                x: obj.x,
+                y: obj.y,
+                width: obj.width,
+                height: obj.height,
+                name: obj.name,
+                attributes: obj.attributes,
+                type: obj.type
+            };
+        } else if (obj.type === "UMLRelationship") {
+            return {
+                id: obj.id,
+                from: obj.from,
+                to: obj.to,
+                relationType: obj.relationType,
+                type: obj.type
+            };
+        }
+        return obj;
     }
 
 
