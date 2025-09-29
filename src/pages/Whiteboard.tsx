@@ -6,6 +6,7 @@ import Toolbar from "../components/Toolbar";
 import ClassModal from "../components/ClassModal";
 import RelationshipModal from "../components/RelationshipModal";
 import AIPanel from "../components/AIPanel";
+import { SocketClient } from "../services/SocketClient";
 
 const Whiteboard: React.FC = () => {
     const { projectId } = useParams<{ projectId: string }>();
@@ -13,9 +14,14 @@ const Whiteboard: React.FC = () => {
     const [selectedClass, setSelectedClass] = useState<any>(null);
     const [relationshipModalOpen, setRelationshipModalOpen] = useState(false);
 
-    const canvasManager = useMemo(
-        () => new CanvasManager(),
+    const socketClient = useMemo(
+        () => new SocketClient(projectId || ""),
         [projectId]
+    );
+
+    const canvasManager = useMemo(
+        () => new CanvasManager(socketClient),
+        [projectId, socketClient]
     );
 
     return (
