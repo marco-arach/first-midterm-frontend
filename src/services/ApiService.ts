@@ -1,6 +1,8 @@
 import type { RegistrationResponse, } from '../types/auth.types';
 import { UMLClass } from "../models/UMLClass";
 import { UMLRelationship } from "../models/UMLRelationship";
+import { generatePayload } from "../utils/generatePayload";
+import { getTimestampedName } from "../utils/dateFormatter";
 export type UMLObject = UMLClass | UMLRelationship;
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -136,4 +138,26 @@ export async function generateObjects(
     console.error("Error en generateObjects:", err);
     return { success: false, error: "Error al conectar con el backend" };
   }
+}
+
+export async function generateAndDownloadProject(objetos: any[]) {
+  const payload = generatePayload(objetos);
+
+  const response = await fetch(`${BASE_URL}/api/v1/generate/generate-project`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = getTimestampedName("spring-project", "zip");
+  a.click();
+  URL.revokeObjectURL(url);
 }
