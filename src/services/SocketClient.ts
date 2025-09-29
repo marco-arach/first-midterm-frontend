@@ -1,6 +1,6 @@
 import { io, Socket } from "socket.io-client";
 
-const SERVER_SOCKET_URL = import.meta.env.VITE_SERVER_SOCKET_URL;
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 type SocketCallback = (data: any) => void;
 
@@ -10,9 +10,8 @@ export class SocketClient {
 
     constructor(pizarraId: string) {
         this.pizarraId = pizarraId;
-        this.socket = io(SERVER_SOCKET_URL);
+        this.socket = io(VITE_API_BASE_URL);
         this.socket.emit("unirse", { pizarraId });
-
         this.socket.on("dibujo", (data: any) => {
             this.socketCallbacks.forEach(cb => cb(data));
         });

@@ -1,14 +1,28 @@
 import React, { useState } from "react";
+import { generateDiagram } from "../services/ApiService";
+import { CanvasManager } from "../managers/CanvasManager";
 
 interface ImageUploaderProps {
-    pizarraId: string;
+    canvasManager: CanvasManager;
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ }) => {
+const ImageUploader: React.FC<ImageUploaderProps> = ({ canvasManager }) => {
     const [image, setImage] = useState<File | null>(null);
 
     const handleSendImage = async () => {
         if (!image) return;
+        try {
+            const result = await generateDiagram(image);
+
+            if (result.success && result.objetos) {
+                const added = canvasManager.agregarObjetos(result.objetos);
+                console.log("Objetos: ", added);
+            } else {
+                console.log("Error al generar diagrama: ", result.error);
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     return (
