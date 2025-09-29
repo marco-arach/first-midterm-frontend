@@ -13,6 +13,8 @@ const Login: React.FC = () => {
         try {
             const response = await loginUser(email, password);
             if (response.success) {
+                localStorage.setItem("userId", String(response.user.id));
+                localStorage.setItem("token", response.token);
                 navigate("/main");
             } else {
                 console.error(response.error);
