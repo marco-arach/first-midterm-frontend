@@ -7,12 +7,15 @@ import ClassModal from "../components/ClassModal";
 import RelationshipModal from "../components/RelationshipModal";
 import AIPanel from "../components/AIPanel";
 import { SocketClient } from "../services/SocketClient";
+import ShareModal from "../components/ShareModal";
+import { Share2 } from "lucide-react";
 
 const Whiteboard: React.FC = () => {
     const { projectId } = useParams<{ projectId: string }>();
     const [activeTool, setActiveTool] = useState<string>("select");
     const [selectedClass, setSelectedClass] = useState<any>(null);
     const [relationshipModalOpen, setRelationshipModalOpen] = useState(false);
+    const [shareModalOpen, setShareModalOpen] = useState(false);
 
     const socketClient = useMemo(
         () => new SocketClient(projectId || ""),
@@ -44,6 +47,29 @@ const Whiteboard: React.FC = () => {
                     position: "relative",
                 }}
             >
+                <div
+                    style={{
+                        position: "absolute",
+                        top: "20px",
+                        right: "20px",
+                        zIndex: 20,
+                    }}
+                >
+                    <button
+                        onClick={() => setShareModalOpen(true)}
+                        style={{
+                            background: "#a4e19eff",
+                            border: "1px solid #0d0e0dff",
+                            borderRadius: "50%",
+                            padding: "10px",
+                            cursor: "pointer",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                        }}
+                        title="Compartir"
+                    >
+                        <Share2 size={20} color="#333" />
+                    </button>
+                </div>
                 <Canvas
                     canvasManager={canvasManager}
                     activeTool={activeTool}
@@ -102,6 +128,10 @@ const Whiteboard: React.FC = () => {
                 onClose={() => setRelationshipModalOpen(false)}
                 onSelect={(toolId) => setActiveTool(toolId)}
                 activeTool={activeTool}
+            />
+            <ShareModal
+                open={shareModalOpen}
+                onClose={() => setShareModalOpen(false)}
             />
         </div>
     );
